@@ -127,13 +127,30 @@ services:
       - bigbluebutton:/var/bigbluebutton
       - html5-static:/html5-static:ro
       - ${DEFAULT_PRESENTATION:-/dev/null}:/www/default.pdf
-    network_mode: host
+    # network_mode: host
     extra_hosts:
       - "host.docker.internal:10.7.7.1"
       - "bbb-web:10.7.7.2"
       - "etherpad:10.7.7.4"
       - "webrtc-sfu:10.7.7.10"
       - "html5:10.7.7.11"
+    networks:
+      traefik-proxy:
+      bbb-net:
+        ipv4_address: 10.7.7.97
+    labels:   
+      - "traefik.enable=true"
+      - "traefik.http.routers.bbb.entrypoints=web"
+      - "traefik.http.routers.bbb.rule=Host(`bbb.fc-moosburg.de`)"     ### Bitte anpassen wie im Schritt 1###
+      - "traefik.http.routers.bbb.middlewares=redirect@file"
+      - "traefik.http.routers.bbb-secured.entrypoints=web-secured"
+      - "traefik.http.routers.bbb-secured.rule=Host(`bbb.fc-moosburg.de`)"     ### Bitte anpassen wie im Schritt 1 ###
+      - "traefik.http.routers.bbb-secured.tls=true"
+      - "traefik.http.routers.bbb-secured.tls.certresolver=mytlschallenge"
+      - "traefik.http.routers.bbb-secured.middlewares=norobotsHeader@file"
+      - "traefik.http.services.bbb.loadbalancer.server.port=8080"
+      - "traefik.http.routers.bbb-secured.service=bbb"
+      - "traefik.docker.network=traefik-proxy"
 
   etherpad:
     build: mod/etherpad
@@ -370,6 +387,9 @@ services:
       SECRET_KEY_BASE: ${RAILS_SECRET}
     ports:
       - 10.7.7.1:5000:80
+    networks:
+      - ldap
+      - default
   postgres:
     image: postgres:12-alpine
     restart: unless-stopped
@@ -420,3 +440,9 @@ networks:
       driver: default
       config:
         - subnet: "10.7.7.0/24"
+  traefik-proxy:
+    external: true
+    name: traefik-proxy
+  ldap:
+    external: true
+    name: ldap

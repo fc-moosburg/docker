@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-cd $(dirname $0)/..
+cd "$(dirname "$0")/.."
 
 if ! [ -x "$(command -v curl)" ]; then
   echo "Error: curl is not installed, but the setup script relies on it."
@@ -79,6 +79,7 @@ then
     while [[ ! $prometheus_exporter_optimization =~ ^(y|n)$ ]]; do
         read -p "Choice (y/n): " prometheus_exporter_optimization
     done
+fi
 
 if [ "$recording" == "y" ]
 then
