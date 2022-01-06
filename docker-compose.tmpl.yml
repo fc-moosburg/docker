@@ -150,7 +150,7 @@ services:
       - "traefik.http.routers.bbb-secured.tls=true"
       - "traefik.http.routers.bbb-secured.tls.certresolver=mytlschallenge"
       - "traefik.http.routers.bbb-secured.middlewares=norobotsHeader@file"
-      - "traefik.http.services.bbb.loadbalancer.server.port=8080"
+      - "traefik.http.services.bbb.loadbalancer.server.port=48087"
       - "traefik.http.routers.bbb-secured.service=bbb"
       - "traefik.docker.network=traefik-proxy"
 
