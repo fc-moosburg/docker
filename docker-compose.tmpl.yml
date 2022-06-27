@@ -10,6 +10,10 @@ x-html5-backend: &html5backend
   build: mod/html5
   image: bbb-html5
   restart: unless-stopped
+  deploy:
+      resources:
+        limits:
+          memory: 1024M
   depends_on:
     - redis
     - mongodb
@@ -40,6 +44,10 @@ x-html5-frontend: &html5frontend
 services:
   bbb-web:
     build: mod/bbb-web
+    deploy:
+      resources:
+        limits:
+          memory: 6G
     restart: unless-stopped
     depends_on:
         - redis
@@ -96,6 +104,10 @@ services:
   freeswitch:
     build: mod/freeswitch
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     cap_add:
       - IPC_LOCK
       - NET_ADMIN
@@ -121,6 +133,10 @@ services:
   nginx:
     build: mod/nginx
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     depends_on:
       - etherpad
       - webrtc-sfu
@@ -157,6 +173,10 @@ services:
   etherpad:
     build: mod/etherpad
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     depends_on:
       - redis
     environment:
@@ -168,6 +188,10 @@ services:
   redis:
     image: redis:6.2-alpine
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 1s
@@ -180,6 +204,10 @@ services:
   mongodb:
     image: mongo:4.4
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
     volumes:
       - ./mod/mongo/mongod.conf:/etc/mongod.conf
       - ./mod/mongo/init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh
@@ -196,6 +224,10 @@ services:
   kurento:
     image: kurento/kurento-media-server:6.16
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     environment:
       KMS_STUN_IP: ${STUN_IP}
       KMS_STUN_PORT: ${STUN_PORT}
@@ -211,6 +243,10 @@ services:
   webrtc-sfu:
     build:  mod/webrtc-sfu
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
     depends_on:
       - redis
       - kurento
@@ -236,6 +272,10 @@ services:
   fsesl-akka:
     build: mod/fsesl-akka
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
     depends_on:
       - redis
     environment:
@@ -247,6 +287,10 @@ services:
   apps-akka:
     build: mod/apps-akka
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     depends_on:
       - redis
     environment:
@@ -274,6 +318,10 @@ services:
   periodic:
     build: mod/periodic
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     depends_on:
       - mongodb
     volumes:
@@ -294,6 +342,10 @@ services:
   recordings:
     build: mod/recordings
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
     depends_on:
       - redis
     environment:
@@ -315,6 +367,10 @@ services:
   webhooks:
     build: mod/webhooks
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     environment:
       DOMAIN: ${DOMAIN}
       SHARED_SECRET: ${SHARED_SECRET}
@@ -330,6 +386,10 @@ services:
   https_proxy:
     image: valian/docker-nginx-auto-ssl
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     volumes:
       - ssl_data:/etc/resty-auto-ssl
     {{ if .Env.EXTERNAL_IPv6 }}
@@ -351,6 +411,10 @@ services:
   coturn:
     image: instrumentisto/coturn:4.5
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
     command:
       - "--external-ip=${EXTERNAL_IPv4}/${EXTERNAL_IPv4}"
       - "--external-ip=${EXTERNAL_IPv6:-::1}/${EXTERNAL_IPv6:-::1}"
@@ -375,6 +439,10 @@ services:
   greenlight:
     image: bigbluebutton/greenlight:v2
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
     env_file: .env
     environment:
       DB_ADAPTER: postgresql
@@ -397,6 +465,10 @@ services:
   postgres:
     image: postgres:12-alpine
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     environment:
       POSTGRES_DB: greenlight
       POSTGRES_USER: postgres
@@ -415,6 +487,10 @@ services:
   prometheus-exporter:
     image: greenstatic/bigbluebutton-exporter:v0.7.0-preview2
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     environment:
       API_BASE_URL: http://10.7.7.1:48087/bigbluebutton/api/
       API_SECRET: ${SHARED_SECRET}

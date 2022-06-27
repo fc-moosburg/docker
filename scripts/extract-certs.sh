@@ -7,7 +7,7 @@ set -u # abort on unset variables
 # adjust these variables according to your setup
 TRAEFIK_CERT_STORE="acme.json"
 TRAEFIK_RESOLVER="mytlschallenge"
-OUTPUT_DIR=/opt/services/bbb/certs
+OUTPUT_DIR=${2:-/opt/services/bbb/certs}
 
 # get acme file
 docker cp traefik:/letsencrypt/acme.json $TRAEFIK_CERT_STORE
