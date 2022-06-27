@@ -1,19 +1,18 @@
 FROM debian:bullseye-slim
 
-# add freeswitch repo
+# install dependencies
 RUN apt-get update && \
-apt-get install -y --no-install-recommends subversion curl wget ca-certificates gnupg gnupg2 lsb-release unzip && \
-wget -O /usr/share/keyrings/freeswitch-archive-keyring.gpg https://files.freeswitch.org/repo/deb/debian-release/freeswitch-archive-keyring.gpg && \
-echo 'deb [signed-by=/usr/share/keyrings/freeswitch-archive-keyring.gpg] http://files.freeswitch.org/repo/deb/debian-release/ bullseye main' > /etc/apt/sources.list.d/freeswitch.list
+    apt-get install -y --no-install-recommends \
+    subversion curl wget ca-certificates gnupg gnupg2 lsb-release unzip
 
-# install dockerize
-ENV DOCKERIZE_VERSION v0.6.1
-RUN wget -q https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+COPY --from=alangecker/bbb-docker-base-java /usr/local/bin/dockerize /usr/local/bin/dockerize
+
 
 # install freeswitch
-RUN apt-get update && apt-get install -y \
+RUN wget -q -O /usr/share/keyrings/freeswitch-archive-keyring.gpg https://freeswitch-mirror.chandi.it/repo/deb/debian-release/signalwire-freeswitch-repo.gpg && \
+    echo 'deb [signed-by=/usr/share/keyrings/freeswitch-archive-keyring.gpg] http://freeswitch-mirror.chandi.it/repo/deb/debian-release/ bullseye main' > /etc/apt/sources.list.d/freeswitch.list && \
+    apt-get update && \
+    apt-get install -y \
         freeswitch \
         freeswitch-mod-commands \
         freeswitch-mod-conference \
@@ -25,9 +24,18 @@ RUN apt-get update && apt-get install -y \
         freeswitch-mod-opusfile \
         freeswitch-mod-opus \
         freeswitch-mod-sndfile \
+        freeswitch-mod-spandsp \
         freeswitch-mod-sofia \
         freeswitch-sounds-en-us-callie \
         iptables
+
+# replace mute & unmute sounds
+RUN wget -q https://gitlab.senfcall.de/senfcall-public/mute-and-unmute-sounds/-/archive/master/mute-and-unmute-sounds-master.zip && \
+    unzip mute-and-unmute-sounds-master.zip && \
+    cd mute-and-unmute-sounds-master/sounds/ && \
+    find . -name "*.wav" -exec /bin/bash -c "echo {};sox -v 0.3 {} /tmp/tmp.wav; mv /tmp/tmp.wav /usr/share/freeswitch/sounds/en/us/callie/conference/{}" \; && \
+    cd ../.. && \
+    rm -r mute-and-unmute-sounds-master mute-and-unmute-sounds-master.zip
 
 
 # -- get official bbb freeswitch config
@@ -35,8 +43,8 @@ RUN apt-get update && apt-get install -y \
 # git sparse-checkout is not yet available with buster and there
 # is no other sane way of downloading a single directory via git
 
-ENV TAG v2.3.4
-RUN svn checkout https://github.com/bigbluebutton/bigbluebutton/tags/$TAG/bbb-voice-conference/config/freeswitch/conf /etc/freeswitch \
+ARG TAG_FS_CONFIG
+RUN svn checkout https://github.com/bigbluebutton/bigbluebutton/tags/$TAG_FS_CONFIG/bbb-voice-conference/config/freeswitch/conf /etc/freeswitch \
     && rm -rf /etc/freeswitch/.svn
 
 # the current available freeswitch-mod-opusfile is broken,
